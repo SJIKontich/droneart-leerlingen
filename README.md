@@ -14,7 +14,7 @@ Dat is alles. Je bent klaar om te starten.
 
 ## Aan de slag
 
-Maak een nieuw bestand aan, bijvoorbeeld `mijn_show.py`. Kijk in `voorbeeld.py` hoe je begint:
+Maak een nieuw bestand aan per hoofdstuk of per oefening, bijvoorbeeld `h1.py` of `h1-oef1.py`. Kijk in `voorbeeld.py` hoe je begint:
 
 ```python
 from drone_engine import *
@@ -24,12 +24,10 @@ nieuwe_scene()
 start_show()
 ```
 
-> **Let op:** geef je bestanden altijd een naam die begint met `mijn_` (bv. `mijn_h1.py`).
+> **Let op:** geef je bestanden altijd een naam die begint met `mijn_` (bv. `mijn_h1.py`) of start met h0, h1, ....
 > Zo worden ze nooit meegestuurd naar GitHub en kom je nooit in conflict met updates.
 
 ## Updates ontvangen
 
 Als er een update is aan `drone_engine.py`, doe je in PyCharm:
 *Git → Pull* (of de blauwe pijl rechtsboven)
-
-Jouw eigen bestanden (`mijn_*.py`) blijven altijd bewaard.
