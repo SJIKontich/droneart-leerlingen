@@ -14,7 +14,7 @@ Dat is alles. Je bent klaar om te starten.
 
 ## Aan de slag
 
-Maak een nieuw bestand aan, bijvoorbeeld `mijn_show.py`, en begin met:
+Maak een nieuw bestand aan, bijvoorbeeld `mijn_show.py`. Kijk in `voorbeeld.py` hoe je begint:
 
 ```python
 from drone_engine import *
@@ -33,7 +33,3 @@ Als er een update is aan `drone_engine.py`, doe je in PyCharm:
 *Git → Pull* (of de blauwe pijl rechtsboven)
 
 Jouw eigen bestanden (`mijn_*.py`) blijven altijd bewaard.
-
-## Referentie
-
-Bekijk `show.py` voor een volledig voorbeeld van wat je kunt bouwen.

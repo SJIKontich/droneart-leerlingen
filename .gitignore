@@ -1,5 +1,6 @@
 .DS_Store
 mijn_*.py
+h[0-9]*.py
 werk/
 __pycache__/
 .venv/
