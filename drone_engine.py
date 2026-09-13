@@ -409,17 +409,29 @@ def _toon_tekst():
         print(f"drone {nummer}: ({_fmt(x)}, {_fmt(y)}) {_kleurnaam(rgb)}")
 
 
-def start_show(herhaal=True, sporen=False):
+def start_show(herhaal=True, sporen=False, volledig_scherm=False, muziek=None):
     """Toon de drone-show.
 
     Grafisch (met pygame) als dat kan; anders als tekst (bv. in CodeRunner).
 
-    herhaal=True : de show speelt in een lus.
-    sporen=True  : elke drone laat een vervagend lichtspoor na (handig om te
-                   zien welke paden de drones vliegen en of ze kruisen).
+    herhaal=True          : de show speelt in een lus.
+    sporen=True           : elke drone laat een vervagend lichtspoor na (handig
+                            om te zien welke paden de drones vliegen en of ze
+                            kruisen).
+    volledig_scherm=True  : de show vult het hele scherm (voor op de beamer).
+                            Hetzelfde stuk "wereld" blijft zichtbaar; alles
+                            wordt gewoon groter getekend.
+    muziek="liedje.mp3"   : speel dit bestand af tijdens de show. De show loopt
+                            dan op de klok van de MUZIEK, niet op een eigen
+                            teller: het nummer start pas als het venster
+                            klaarstaat, en de drones kunnen niet stilaan
+                            achterop raken. Bestaat het bestand niet, dan
+                            speelt de show gewoon zonder geluid. Op het einde
+                            van de show faadt het nummer uit.
 
     Sluit met de vensterknop of met de Escape-toets.
     """
+    global WIDTH, HEIGHT, SCALE
     if not _keyframes:
         nieuwe_scene()   # niets vastgelegd? leg dan toch de huidige stand vast
 
@@ -437,20 +449,47 @@ def start_show(herhaal=True, sporen=False):
     cap_every = int(os.environ.get("DRONE_CAP_EVERY", "18"))
     cap_max = int(os.environ.get("DRONE_CAP_MAX", "150"))
 
+    # Op volledig scherm blijft dezelfde wereld zichtbaar: we rekenen SCALE om
+    # naar de schermgrootte en tekenen alles met dezelfde factor groter.
+    vergroting = 1.0
+    vlaggen = 0
+    if volledig_scherm:
+        wereld_breed = WIDTH / SCALE
+        wereld_hoog = HEIGHT / SCALE
+        info = pygame.display.Info()
+        WIDTH, HEIGHT = info.current_w, info.current_h
+        nieuwe_scale = min(WIDTH / wereld_breed, HEIGHT / wereld_hoog)
+        vergroting = nieuwe_scale / SCALE
+        SCALE = nieuwe_scale
+        vlaggen = pygame.FULLSCREEN
+
     # Geen scherm beschikbaar (bv. headless server met wel pygame) -> tekstmodus.
     try:
-        scherm = pygame.display.set_mode((WIDTH, HEIGHT))
+        scherm = pygame.display.set_mode((WIDTH, HEIGHT), vlaggen)
     except pygame.error:
         pygame.quit()
         _toon_tekst()
         return
     pygame.display.set_caption("Drone-show")
     klok = pygame.time.Clock()
-    glow = _maak_glow()
+    glow = _maak_glow(int(70 * vergroting))
     grootte = glow.get_width()
+    stip = max(2, int(4 * vergroting))
 
     SPOOR_LENGTE = 16
     geschiedenis = []
+
+    # De muziek start hier, als alles klaarstaat om te tekenen -- niet eerder.
+    # Anders loopt het nummer de opstarttijd van het venster voor.
+    speelt = False
+    if muziek and not test and os.path.exists(muziek):
+        try:
+            pygame.mixer.init()
+            pygame.mixer.music.load(muziek)
+            pygame.mixer.music.play()
+            speelt = True
+        except pygame.error:
+            speelt = False          # geen geluidskaart: toon de show zonder muziek
 
     elapsed = start_at
     frames = 0
@@ -458,7 +497,23 @@ def start_show(herhaal=True, sporen=False):
     while bezig:
         dt = (1 / 60.0) if test else klok.tick(FPS) / 1000.0
         elapsed += dt
-        if herhaal and not test and totaal > 0 and elapsed > totaal:
+
+        # Speelt er muziek, dan is de speelkop van het nummer de klok: zo blijft
+        # beeld en geluid samen, ook als een paar beelden overgeslagen worden.
+        if speelt:
+            positie = pygame.mixer.music.get_pos()
+            if positie >= 0:
+                elapsed = start_at + positie / 1000.0
+            else:
+                speelt = False      # het nummer is uit: verder op de eigen klok
+
+        # De show is gedaan -> de muziek ook. Even uitfaden in plaats van
+        # abrupt afkappen, dat klinkt netter.
+        if speelt and totaal > 0 and elapsed >= totaal:
+            pygame.mixer.music.fadeout(800)
+            speelt = False
+
+        if herhaal and not test and not speelt and totaal > 0 and elapsed > totaal:
             elapsed = elapsed % totaal
 
         for event in pygame.event.get():
@@ -489,7 +544,7 @@ def start_show(herhaal=True, sporen=False):
         for px, py, (r, g, b) in huidig:
             _teken_lichtpunt(scherm, glow, grootte, px, py, (r, g, b))
             if (r, g, b) != (0, 0, 0):
-                pygame.draw.circle(scherm, (int(r), int(g), int(b)), (px, py), 4)
+                pygame.draw.circle(scherm, (int(r), int(g), int(b)), (px, py), stip)
 
         pygame.display.flip()
 
